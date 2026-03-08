@@ -1,4 +1,13 @@
 node_modules/
 **/node_modules/
-*.zip
+dist/
+build/
+coverage/
 .env
+.env.*
+!.env.example
+*.log
+*.zip
+.DS_Store
+Thumbs.db
+.vscode/

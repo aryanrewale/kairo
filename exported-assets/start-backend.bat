@@ -1,0 +1,9 @@
+@echo off
+echo Starting KAIRO Backend Server...
+
+cd server
+echo Installing dependencies if needed...
+call npm install
+
+echo Starting server on port 5005...
+npm start

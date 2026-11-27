@@ -11,13 +11,24 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
     port: 3000,
+    strictPort: false,
+    cors: true,
+    headers: {
+      'X-Frame-Options': 'ALLOWALL',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5005',
         changeOrigin: true,
       },
     },
+    hmr: {
+      clientPort: 443,
+    },
+    // allow e2b preview hosts
+    allowedHosts: true,
   },
   build: {
     outDir: 'dist',

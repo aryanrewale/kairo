@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { Moon, Sun, LogOut, Menu, X, Star, MoreHorizontal, User, Bell, Users, UserPlus } from 'lucide-react'
+import { Moon, Sun, LogOut, Menu, X, Star, MoreHorizontal, Bell } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 const Navbar = () => {
@@ -14,53 +14,12 @@ const Navbar = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [userLevel, setUserLevel] = useState({ stage: 'Bronze', stageLevel: 1 })
 
-  // Mock notifications data
   const notifications = [
-    {
-      id: 1,
-      type: 'friend_request',
-      title: 'Friend Request',
-      message: 'KanjiMaster wants to be your friend',
-      time: '2 min ago',
-      icon: '👥',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'community',
-      title: 'Community Update',
-      message: 'New discussion in Japanese Grammar group',
-      time: '15 min ago',
-      icon: '💬',
-      unread: true
-    },
-    {
-      id: 3,
-      type: 'exam',
-      title: 'Exam Reminder',
-      message: 'JLPT N3 practice exam starts in 2 days',
-      time: '1 hour ago',
-      icon: '📝',
-      unread: true
-    },
-    {
-      id: 4,
-      type: 'achievement',
-      title: 'Achievement Unlocked',
-      message: 'You completed 50 flashcards!',
-      time: '3 hours ago',
-      icon: '🏆',
-      unread: false
-    },
-    {
-      id: 5,
-      type: 'friend_request',
-      title: 'Friend Request',
-      message: 'TokyoDreamer sent you a friend request',
-      time: '1 day ago',
-      icon: '👥',
-      unread: false
-    }
+    { id: 1, type: 'friend_request', title: 'Friend Request', message: 'KanjiMaster wants to be your friend', time: '2 min ago', icon: '👥', unread: true },
+    { id: 2, type: 'community', title: 'Community Update', message: 'New discussion in Japanese Grammar group', time: '15 min ago', icon: '💬', unread: true },
+    { id: 3, type: 'exam', title: 'Exam Reminder', message: 'JLPT N3 practice exam starts in 2 days', time: '1 hour ago', icon: '📝', unread: true },
+    { id: 4, type: 'achievement', title: 'Achievement Unlocked', message: 'You completed 50 flashcards!', time: '3 hours ago', icon: '🏆', unread: false },
+    { id: 5, type: 'friend_request', title: 'Friend Request', message: 'TokyoDreamer sent you a friend request', time: '1 day ago', icon: '👥', unread: false }
   ]
 
   const handleLogout = () => {
@@ -70,426 +29,366 @@ const Navbar = () => {
     setIsUserMenuOpen(false)
   }
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen)
-  }
-
-  const toggleUserMenu = () => {
-    setIsUserMenuOpen(!isUserMenuOpen)
-  }
-
-  const closeMenu = () => {
-    setIsMenuOpen(false)
-  }
-
-  const closeUserMenu = () => {
-    setIsUserMenuOpen(false)
-  }
+  const closeMenu = () => setIsMenuOpen(false)
+  const toggleUserMenu = () => setIsUserMenuOpen(!isUserMenuOpen)
+  const closeUserMenu = () => setIsUserMenuOpen(false)
+  const toggleNotifications = () => setIsNotificationOpen(!isNotificationOpen)
+  const closeNotifications = () => setIsNotificationOpen(false)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Don't close if clicking on the menu or notification buttons
-      if (event.target.closest('[data-menu-button]') || event.target.closest('[data-notification-button]')) {
-        return
-      }
-      
-      if (isUserMenuOpen && !event.target.closest('.user-menu-popup')) {
-        setIsUserMenuOpen(false)
-      }
-      if (isNotificationOpen && !event.target.closest('.notification-dropdown')) {
-        setIsNotificationOpen(false)
-      }
+      if (event.target.closest('[data-menu-button]') || event.target.closest('[data-notification-button]')) return
+      if (isUserMenuOpen && !event.target.closest('.user-menu-popup')) setIsUserMenuOpen(false)
+      if (isNotificationOpen && !event.target.closest('.notification-dropdown')) setIsNotificationOpen(false)
     }
-
-    if (isUserMenuOpen || isNotificationOpen) {
-      document.addEventListener('click', handleClickOutside)
-    }
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside)
-    }
+    if (isUserMenuOpen || isNotificationOpen) document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [isUserMenuOpen, isNotificationOpen])
 
-  // Add blur effect to main content when menu is open
   useEffect(() => {
     const mainContent = document.querySelector('main')
     if (mainContent) {
-      if (isUserMenuOpen) {
-        mainContent.style.filter = 'blur(4px)'
-        mainContent.style.transition = 'filter 0.3s ease'
-      } else {
-        mainContent.style.filter = 'none'
-      }
+      mainContent.style.filter = isUserMenuOpen ? 'blur(6px)' : 'none'
+      mainContent.style.transition = 'filter 0.3s ease'
     }
   }, [isUserMenuOpen])
 
-  const toggleNotifications = () => {
-    setIsNotificationOpen(!isNotificationOpen)
-  }
-
-  const closeNotifications = () => {
-    setIsNotificationOpen(false)
-  }
-
-  const isActive = (path) => location.pathname === path
-
-  useEffect(() => {
-    if (user) {
-      fetchUserLevel()
-    }
-  }, [user])
+  useEffect(() => { if (user) fetchUserLevel() }, [user])
 
   const fetchUserLevel = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch('/api/progress/dashboard', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
+      const response = await fetch('/api/progress/dashboard', { headers: { 'Authorization': `Bearer ${token}` } })
       if (response.ok) {
         const data = await response.json()
         setUserLevel({ stage: data.stage, stageLevel: data.stageLevel })
       }
-    } catch (error) {
-      console.error('Error fetching user level:', error)
-    }
+    } catch (e) { console.error(e) }
   }
 
   const getStageColor = (stage) => {
     const colors = {
       Bronze: 'from-orange-600 to-yellow-600',
-      Silver: 'from-gray-400 to-gray-600', 
+      Silver: 'from-gray-400 to-gray-600',
       Gold: 'from-yellow-400 to-yellow-600',
       Platinum: 'from-blue-400 to-purple-600',
       Diamond: 'from-cyan-400 to-blue-600'
     }
-    return colors[stage] || 'from-gray-400 to-gray-600'
+    return colors[stage] || 'from-zinc-500 to-zinc-600'
   }
 
   return (
     <>
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2" onClick={closeMenu}>
-            <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">KAIRØ</span>
-            <span className="text-xl">🎌</span>
-          </Link>
-          
-          <div className="flex items-center space-x-4">
-            {user && (
-              <div className="relative">
-                <button
-                  onClick={toggleNotifications}
-                  data-notification-button
-                  className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all duration-300"
-                  aria-label="Notifications"
-                >
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold animate-pulse">
-                    {notifications.filter(n => n.unread).length}
-                  </span>
-                </button>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Instrument+Sans:wght@600;700&family=JetBrains+Mono:wght@500&display=swap');`}</style>
 
-                {/* Notifications Dropdown */}
-                {isNotificationOpen && (
-                  <div className="notification-dropdown absolute right-0 top-12 w-80 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/30 dark:border-gray-700/50 z-50">
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                        <button 
-                          onClick={closeNotifications}
-                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      
-                      <div className="space-y-3 max-h-96 overflow-y-auto">
-                        {notifications.map((notification) => (
-                          <div 
-                            key={notification.id} 
-                            className={`p-3 rounded-xl border transition-all duration-200 hover:shadow-md cursor-pointer ${
-                              notification.unread 
-                                ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' 
-                                : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600'
-                            }`}
-                          >
-                            <div className="flex items-start space-x-3">
-                              <div className="flex-shrink-0">
-                                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-lg">
-                                  {notification.icon}
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {notification.title}
-                                  </p>
-                                  {notification.unread && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  )}
-                                </div>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                  {notification.message}
-                                </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">
-                                  {notification.time}
-                                </p>
-                                
-                                {/* Action buttons for friend requests */}
-                                {notification.type === 'friend_request' && notification.unread && (
-                                  <div className="flex space-x-2 mt-3">
-                                    <button className="px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-full text-xs font-medium hover:from-green-600 hover:to-emerald-600 transition-all">
-                                      Accept
-                                    </button>
-                                    <button className="px-3 py-1 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full text-xs font-medium hover:from-gray-500 hover:to-gray-600 transition-all">
-                                      Decline
-                                    </button>
-                                  </div>
-                                )}
-                                
-                                {/* Action button for exam reminders */}
-                                {notification.type === 'exam' && (
-                                  <div className="mt-3">
-                                    <button className="px-3 py-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full text-xs font-medium hover:from-blue-600 hover:to-indigo-600 transition-all">
-                                      View Exam
-                                    </button>
-                                  </div>
-                                )}
-                                
-                                {/* Action button for community updates */}
-                                {notification.type === 'community' && (
-                                  <div className="mt-3">
-                                    <button className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-xs font-medium hover:from-purple-600 hover:to-pink-600 transition-all">
-                                      Join Discussion
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      
-                      <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-600">
-                        <button className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium">
-                          View All Notifications
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+      {/* spacer for fixed capsule */}
+      <div className="h-[78px] sm:h-[88px]" />
+
+      <nav className="fixed top-3 sm:top-4 left-0 right-0 z-40 px-3 sm:px-4 pointer-events-none">
+        <div className="max-w-[1240px] mx-auto pointer-events-auto">
+          {/* floating island capsule */}
+          <div
+            className="relative rounded-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-black/[0.08] dark:border-white/10 flex items-center justify-between gap-2 sm:gap-4 px-2.5 sm:px-3 py-2"
+            style={{
+              boxShadow:
+                '0 1px 0 rgba(255,255,255,0.9) inset, 0 1px 2px rgba(17,18,16,0.04), 0 8px 20px rgba(17,18,16,0.06), 0 24px 48px rgba(17,18,16,0.08)',
+            }}
+          >
+            {/* inner bevel */}
+            <div className="absolute inset-0 rounded-full pointer-events-none" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), inset 0 -1px 0 rgba(0,0,0,0.06)' }} />
+
+            {/* left: brand */}
+            <div className="flex items-center gap-2 sm:gap-6 min-w-0">
+              <Link to="/" onClick={closeMenu} className="flex items-center gap-2.5 sm:gap-3 pl-1 shrink-0 group">
+                {/* embossed mark */}
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#111210] dark:bg-white text-white dark:text-black grid place-items-center shadow-[0_4px_12px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.18)] group-active:scale-[0.98] transition">
+                  <span className="text-[11px] font-black tracking-[-0.04em]" style={{ fontFamily: "'Fraunces', serif" }}>K</span>
+                </div>
+                <div className="leading-none">
+                  <div className="text-[18px] sm:text-[20px] font-black tracking-[-0.04em]" style={{ fontFamily: "'Fraunces', serif" }}>KAIRØ</div>
+                  <div className="hidden sm:block text-[10px] tracking-[0.14em] font-bold mono text-black/40 dark:text-white/40 -mt-1">JAPANESE ATELIER</div>
+                </div>
+              </Link>
+
+              {/* desktop nav links - pill rail */}
+              <div className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-[#F3EEE6] dark:bg-zinc-800 border border-black/5 dark:border-white/5">
+                {[
+                  { to: '/services', label: 'Services' },
+                  { to: '/help', label: 'Help' },
+                ].map((l) => (
+                  !user && (
+                    <Link
+                      key={l.to}
+                      to={l.to}
+                      className={`px-4 py-1.5 rounded-full text-[13px] font-semibold tracking-tight transition ${
+                        location.pathname === l.to ? 'bg-white dark:bg-zinc-700 shadow-sm border border-black/5' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'
+                      }`}
+                    >
+                      {l.label}
+                    </Link>
+                  )
+                ))}
+                {user && (
+                  <>
+                    {[
+                      { to: '/dashboard', label: 'Dashboard' },
+                      { to: '/flashcards', label: 'Decks' },
+                      { to: '/chat', label: 'Chat' },
+                    ].map((l) => (
+                      <Link
+                        key={l.to}
+                        to={l.to}
+                        className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold tracking-tight transition ${
+                          location.pathname === l.to ? 'bg-white dark:bg-zinc-700 shadow-sm border border-black/5' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'
+                        }`}
+                      >
+                        {l.label}
+                      </Link>
+                    ))}
+                  </>
                 )}
               </div>
-            )}
-            <button
-              onClick={toggleTheme}
-              className="relative w-14 h-7 bg-gradient-to-r from-orange-400 to-pink-500 dark:from-gray-600 dark:to-gray-700 rounded-full p-1 transition-all duration-300 hover:shadow-lg hover:scale-105 focus:outline-none"
-              aria-label="Toggle theme"
-            >
-              <div className={`absolute inset-1 w-5 h-5 bg-white rounded-full shadow-md transform transition-all duration-300 flex items-center justify-center ${isDark ? 'translate-x-7' : 'translate-x-0'}`}>
-                {isDark ? (
-                  <Moon className="h-3 w-3 text-gray-700" />
-                ) : (
-                  <Sun className="h-3 w-3 text-yellow-500" />
-                )}
-              </div>
-            </button>
-            {user ? (
-              <>
-                <button
-                  onClick={toggleUserMenu}
-                  data-menu-button
-                  className="flex items-center space-x-2 px-3 py-1.5 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 rounded-full transition-all duration-300 shadow-md hover:shadow-lg border border-white/30 relative"
-                >
+            </div>
+
+            {/* right actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {/* theme */}
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#F3EEE6] dark:bg-zinc-800 border border-black/5 dark:border-white/10 grid place-items-center hover:scale-[1.02] active:scale-[0.98] transition"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.8), 0 2px 8px rgba(0,0,0,0.06)' }}
+              >
+                <span className="w-5 h-5 rounded-full bg-white dark:bg-zinc-900 grid place-items-center shadow-sm border border-black/5">
+                  {isDark ? <Moon className="w-3.5 h-3.5 text-zinc-700" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
+                </span>
+              </button>
+
+              {user ? (
+                <>
+                  {/* notifications */}
                   <div className="relative">
-                    <img 
-                      src={user?.profile?.avatar || user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'} 
-                      alt="Profile" 
-                      className={`w-6 h-6 rounded-full object-cover ${user?.isPremium ? 'ring-2 ring-yellow-400' : ''}`}
-                    />
-                    {user?.isPremium && (
-                      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-bold shadow-lg">
-                        ⭐
+                    <button
+                      onClick={toggleNotifications}
+                      data-notification-button
+                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 grid place-items-center hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
+                      style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 10px rgba(0,0,0,0.06)' }}
+                    >
+                      <Bell className="w-[18px] h-[18px] text-zinc-700 dark:text-zinc-200" />
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#D93D1A] text-white text-[11px] font-black grid place-items-center shadow-[0_2px_8px_rgba(217,61,26,0.4)]">
+                        {notifications.filter((n) => n.unread).length}
+                      </span>
+                    </button>
+
+                    {isNotificationOpen && (
+                      <div className="notification-dropdown absolute right-0 top-[48px] w-[340px] sm:w-80 bg-white dark:bg-zinc-900 rounded-[22px] shadow-[0_16px_48px_rgba(0,0,0,0.18)] border border-black/5 dark:border-white/10 overflow-hidden z-50">
+                        <div className="p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-[14px] font-black tracking-tight">Notifications</h3>
+                            <button onClick={closeNotifications} className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 grid place-items-center">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                            {notifications.map((n) => (
+                              <div key={n.id} className={`p-3 rounded-2xl border ${n.unread ? 'bg-[#FFF7F3] dark:bg-zinc-800 border-[#D93D1A]/15' : 'bg-zinc-50 dark:bg-zinc-800/60 border-black/5 dark:border-white/5'} `}>
+                                <div className="flex gap-3">
+                                  <div className="w-9 h-9 rounded-full bg-[#111210] text-white grid place-items-center text-[14px] shrink-0">{n.icon}</div>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-[13px] font-bold leading-none truncate">{n.title}</p>
+                                      {n.unread && <span className="w-1.5 h-1.5 rounded-full bg-[#D93D1A] shrink-0" />}
+                                    </div>
+                                    <p className="text-[12px] leading-[1.4] font-medium text-black/60 dark:text-white/60 mt-1">{n.message}</p>
+                                    <p className="text-[11px] mono font-bold text-black/30 dark:text-white/30 mt-1">{n.time}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <button className="w-full mt-3 text-center text-[12px] font-bold tracking-[0.08em] mono text-[#D93D1A]">VIEW ALL →</button>
+                        </div>
                       </div>
                     )}
                   </div>
-                  <MoreHorizontal className="h-3 w-3 text-gray-600 dark:text-gray-400" />
-                </button>
-              
-                {/* User Menu Popup */}
-                {isUserMenuOpen && (
-                  <div className="fixed inset-0 bg-black/20 z-50 flex items-center justify-center p-4" onClick={closeUserMenu}>
-                    <div 
-                      className="user-menu-popup w-full max-w-sm bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/30 dark:border-gray-700/50 mx-auto my-auto max-h-[90vh] overflow-y-auto"
-                      style={{
-                        animation: 'popUp 0.6s ease-out forwards'
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                    <div className="p-4">
-                      {/* User Info Header */}
-                      <div className="text-center mb-6">
-                        <div className="relative inline-block mb-3">
-                          <img 
-                            src={user?.profile?.avatar || user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'} 
-                            alt="Profile" 
-                            className={`w-16 h-16 rounded-full object-cover shadow-xl border-3 ${user?.isPremium ? 'border-yellow-400' : 'border-white/50'}`}
-                          />
-                          {user?.isPremium && (
-                            <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-sm rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg">
-                              ⭐
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex items-center justify-center space-x-2 mb-2">
-                          <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{user?.username}</h3>
-                          {user?.isPremium && (
-                            <span className="text-yellow-500 text-sm font-bold px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
-                              PRO
-                            </span>
-                          )}
-                        </div>
-                        <div className={`inline-flex items-center space-x-1 px-4 py-2 bg-gradient-to-r ${getStageColor(userLevel.stage)} rounded-full shadow-lg`}>
-                          <Star className="h-4 w-4 text-white" />
-                          <span className="text-sm font-bold text-white">{userLevel.stage} Lv.{userLevel.stageLevel}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Navigation Links */}
-                      <div className="grid grid-cols-2 gap-3 mb-4">
-                        <Link to="/dashboard" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">📊</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Dashboard</span>
-                        </Link>
-                        <Link to="/flashcards" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">🃏</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Flashcards</span>
-                        </Link>
-                        <Link to="/quizzes" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">🧠</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Quizzes</span>
-                        </Link>
-                        <Link to="/learning" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">📚</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Learning</span>
-                        </Link>
-                        <Link to="/exams" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">📝</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Exams</span>
-                        </Link>
-                        <Link to="/chat" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-pink-500 to-rose-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">💬</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Chat</span>
-                        </Link>
-                        <Link to="/profile" onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                          <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                            <span className="text-white text-sm">👤</span>
-                          </div>
-                          <span className="text-xs font-medium text-gray-900 dark:text-white">Profile</span>
-                        </Link>
-                      </div>
-                      
-                      {/* Friends Section */}
-                      <div className="mb-4">
-                        <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2 px-2">Friends</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                              <span className="text-white text-sm">👥</span>
-                            </div>
-                            <span className="text-xs font-medium text-gray-900 dark:text-white">Following</span>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">248</div>
-                          </button>
-                          <button onClick={closeUserMenu} className="group bg-white/60 dark:bg-gray-700/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 hover:shadow-xl transition-all duration-300 text-center hover:scale-105">
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-500 rounded-lg flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                              <span className="text-white text-sm">👤</span>
-                            </div>
-                            <span className="text-xs font-medium text-gray-900 dark:text-white">Followers</span>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">1.2k</div>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      {/* Logout Button */}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl text-sm font-medium hover:scale-105"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
-                      </button>
-                    </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <Link to="/services" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 transition-colors">Services</Link>
-                <Link to="/help" className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary-600 transition-colors">Help</Link>
-                <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 border border-gray-300 dark:border-gray-600 rounded-full transition-colors">Login</Link>
-                <Link to="/register" className="px-4 py-2 text-sm font-medium bg-gradient-to-r from-orange-400 to-pink-500 text-white rounded-full transition-all duration-300 hover:shadow-md">Register</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-          <div className="px-2 pt-2 pb-3 space-y-1">
-            {user ? (
-              <>
-                <Link to="/dashboard" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Dashboard</Link>
-                <Link to="/flashcards" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Flashcards</Link>
-                <Link to="/quizzes" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Quizzes</Link>
-                <Link to="/exams" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Exams</Link>
-                <Link to="/chat" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Chat</Link>
-                <Link to="/profile" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Profile</Link>
-                <Link to="/learning" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Learning</Link>
-              </>
-            ) : (
-              <>
-                <Link to="/services" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Services</Link>
-                <Link to="/help" onClick={closeMenu} className="block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">Help</Link>
-              </>
-            )}
+                  {/* user capsule */}
+                  <button
+                    onClick={toggleUserMenu}
+                    data-menu-button
+                    className="flex items-center gap-2 sm:gap-2.5 pl-1 pr-1 sm:pr-1.5 py-1 rounded-full bg-[#111210] dark:bg-white text-white dark:text-black hover:brightness-[1.05] active:scale-[0.98] transition shadow-[0_6px_16px_rgba(0,0,0,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]"
+                  >
+                    <img
+                      src={user?.profile?.avatar || user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=64&h=64&fit=crop&crop=face'}
+                      alt=""
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white/20"
+                    />
+                    <span className="hidden sm:block text-[13px] font-bold tracking-tight pr-1 max-w-[120px] truncate">{user?.username}</span>
+                    <span className="hidden sm:grid w-7 h-7 rounded-full bg-white/15 dark:bg-black/10 place-items-center">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </span>
+                    <span className="sm:hidden w-6 h-6 rounded-full bg-white/15 grid place-items-center">
+                      <MoreHorizontal className="w-3.5 h-3.5" />
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="hidden sm:inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-white dark:bg-zinc-800 border border-black/5 dark:border-white/10 text-[13px] font-bold tracking-tight hover:bg-zinc-50 dark:hover:bg-zinc-700 transition"
+                    style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 10px rgba(0,0,0,0.06)' }}
+                  >
+                    Log in
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-full bg-[#D93D1A] text-white text-[13px] font-black tracking-tight hover:brightness-[1.05] active:translate-y-px transition shadow-[0_6px_16px_rgba(217,61,26,0.28),inset_0_1px_0_rgba(255,255,255,0.18)]"
+                  >
+                    <span className="hidden sm:inline">Start free</span>
+                    <span className="sm:hidden">Join</span>
+                    <span className="hidden sm:grid w-5 h-5 rounded-full bg-white text-[#D93D1A] place-items-center text-[12px]">↗</span>
+                  </Link>
+                  {/* mobile menu button when logged out */}
+                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden w-9 h-9 rounded-full bg-white dark:bg-zinc-800 border border-black/5 grid place-items-center">
+                    {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                  </button>
+                </>
+              )}
+
+              {/* mobile hamburger for logged-in (extra) */}
+              {user && (
+                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="lg:hidden w-9 h-9 rounded-full bg-white dark:bg-zinc-800 border border-black/5 grid place-items-center">
+                  {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* floating contact shadow */}
+          <div className="mx-auto mt-2 h-5 max-w-[88%] bg-black/10 dark:bg-black/30 blur-[14px] rounded-full pointer-events-none hidden sm:block" />
+
+          {/* mobile dropdown - sheet with depth */}
+          {isMenuOpen && (
+            <div className="mt-3 rounded-[22px] bg-white dark:bg-zinc-900 border border-black/5 dark:border-white/10 overflow-hidden shadow-[0_16px_48px_rgba(0,0,0,0.16)] p-2 lg:hidden">
+              <div className="grid gap-1">
+                {user ? (
+                  <>
+                    {[
+                      { to: '/dashboard', label: 'Dashboard', sub: 'Overview' },
+                      { to: '/flashcards', label: 'Flashcards', sub: 'Decks & SRS' },
+                      { to: '/quizzes', label: 'Quizzes', sub: 'Adaptive' },
+                      { to: '/exams', label: 'Exams', sub: 'JLPT / MEXT' },
+                      { to: '/chat', label: 'Chat', sub: 'Language exchange' },
+                      { to: '/learning', label: 'Learning', sub: 'Paths' },
+                      { to: '/profile', label: 'Profile', sub: 'Settings' },
+                    ].map((l) => (
+                      <Link key={l.to} to={l.to} onClick={closeMenu} className="flex items-center justify-between px-4 py-3 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition">
+                        <span className="text-[14px] font-bold">{l.label}</span>
+                        <span className="text-[11px] mono tracking-[0.08em] font-bold text-black/40 dark:text-white/40">{l.sub}</span>
+                      </Link>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <Link to="/services" onClick={closeMenu} className="px-4 py-3 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 text-[14px] font-bold">
+                      Services
+                    </Link>
+                    <Link to="/help" onClick={closeMenu} className="px-4 py-3 rounded-2xl hover:bg-zinc-50 dark:hover:bg-zinc-800 text-[14px] font-bold">
+                      Help
+                    </Link>
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <Link to="/login" onClick={closeMenu} className="text-center py-3 rounded-full bg-zinc-100 dark:bg-zinc-800 text-[14px] font-bold">
+                        Log in
+                      </Link>
+                      <Link to="/register" onClick={closeMenu} className="text-center py-3 rounded-full bg-[#D93D1A] text-white text-[14px] font-black">
+                        Start free
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {/* user popup */}
+      {isUserMenuOpen && (
+        <div className="fixed inset-0 bg-[#FFFCF8]/60 dark:bg-black/40 backdrop-blur-[2px] z-50 flex items-start justify-center sm:items-center p-3 sm:p-4" onClick={closeUserMenu}>
+          <div
+            className="user-menu-popup w-full max-w-[380px] bg-white dark:bg-zinc-900 rounded-[28px] shadow-[0_24px_64px_rgba(0,0,0,0.22)] border border-black/5 dark:border-white/10 overflow-hidden"
+            style={{ animation: 'popUp 0.5s cubic-bezier(0.16,1,0.3,1)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-5 sm:p-6">
+              <div className="text-center">
+                <div className="relative inline-block">
+                  <img
+                    src={user?.profile?.avatar || user?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=120&h=120&fit=crop&crop=face'}
+                    alt=""
+                    className="w-20 h-20 rounded-full object-cover border-[3px] border-white dark:border-zinc-800 shadow-[0_8px_24px_rgba(0,0,0,0.14)]"
+                  />
+                  {user?.isPremium && <span className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-amber-400 border-2 border-white grid place-items-center text-[12px]">★</span>}
+                </div>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <h3 className="text-[18px] font-black tracking-tight" style={{ fontFamily: "'Fraunces', serif" }}>
+                    {user?.username}
+                  </h3>
+                  {user?.isPremium && <span className="text-[11px] font-black tracking-[0.08em] px-2 py-1 rounded-full bg-amber-400 text-black">PRO</span>}
+                </div>
+                <div className={`mt-2 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r ${getStageColor(userLevel.stage)} text-white text-[12px] font-black tracking-[0.06em] shadow-[0_4px_12px_rgba(0,0,0,0.12)]`}>
+                  <Star className="w-3.5 h-3.5" /> {userLevel.stage} Lv.{userLevel.stageLevel}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5 mt-6">
+                {[
+                  { to: '/dashboard', label: 'Dashboard', icon: '◧' },
+                  { to: '/flashcards', label: 'Decks', icon: '⧉' },
+                  { to: '/quizzes', label: 'Quizzes', icon: '⬢' },
+                  { to: '/learning', label: 'Learning', icon: '⬣' },
+                  { to: '/exams', label: 'Exams', icon: '⬔' },
+                  { to: '/chat', label: 'Chat', icon: '⬥' },
+                  { to: '/profile', label: 'Profile', icon: '⬤' },
+                ].map((l) => (
+                  <Link
+                    key={l.to}
+                    to={l.to}
+                    onClick={closeUserMenu}
+                    className="group flex flex-col items-center gap-2 p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800 hover:bg-white dark:hover:bg-zinc-700 border border-black/5 dark:border-white/5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition"
+                  >
+                    <span className="w-9 h-9 rounded-xl bg-white dark:bg-zinc-900 border border-black/5 grid place-items-center text-[13px] font-black shadow-sm group-hover:scale-105 transition">
+                      {l.icon}
+                    </span>
+                    <span className="text-[12px] font-bold tracking-tight">{l.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-2.5">
+                <div className="rounded-2xl bg-[#F3EEE6] dark:bg-zinc-800 p-3 text-center border border-black/5">
+                  <div className="text-[11px] mono tracking-[0.08em] font-bold text-black/40 dark:text-white/40">FOLLOWING</div>
+                  <div className="text-[18px] font-black leading-none mt-1">248</div>
+                </div>
+                <div className="rounded-2xl bg-[#F3EEE6] dark:bg-zinc-800 p-3 text-center border border-black/5">
+                  <div className="text-[11px] mono tracking-[0.08em] font-bold text-black/40 dark:text-white/40">FOLLOWERS</div>
+                  <div className="text-[18px] font-black leading-none mt-1">1.2k</div>
+                </div>
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full mt-4 flex items-center justify-center gap-2 py-3.5 rounded-full bg-[#111210] dark:bg-white text-white dark:text-black text-[14px] font-black hover:brightness-[1.05] active:scale-[0.98] transition shadow-[0_8px_20px_rgba(0,0,0,0.14)]"
+              >
+                <LogOut className="w-4 h-4" /> Logout
+              </button>
+            </div>
           </div>
         </div>
       )}
-      
 
-    </nav>
-    
-    <style jsx global>{`
-      @keyframes popUp {
-        0% {
-          opacity: 0;
-          transform: scale(0.8);
-        }
-        70% {
-          opacity: 0.9;
-          transform: scale(1.05);
-        }
-        100% {
-          opacity: 1;
-          transform: scale(1);
-        }
-      }
-    `}</style>
+      <style>{`@keyframes popUp { 0%{opacity:0;transform:translateY(8px) scale(0.98)} 100%{opacity:1;transform:translateY(0) scale(1)} }`}</style>
     </>
   )
 }
